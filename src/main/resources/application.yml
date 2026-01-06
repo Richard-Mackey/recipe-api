@@ -1,0 +1,19 @@
+# Default configuration
+spring:
+  application:
+    name: recipe-api
+  profiles:
+    active: dev
+
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: 8082
+
+app:
+  name: Recipe API
+  version: 1.0.0
