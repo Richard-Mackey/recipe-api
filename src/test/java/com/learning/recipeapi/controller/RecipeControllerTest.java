@@ -107,7 +107,7 @@ public class RecipeControllerTest {
             post("/recipes")
                 .contentType("application/json")
                 .content(objectMapper.writeValueAsString(requestRecipe)))
-        .andExpect(status().isOk())
+        .andExpect(status().isCreated())
         .andExpect(jsonPath("$.id").value(1))
         .andExpect(jsonPath("$.name").value("Test Recipe"))
         .andExpect(jsonPath("$.ingredientsText").value("Test ingredients"))
@@ -312,7 +312,7 @@ public class RecipeControllerTest {
             post("/recipes")
                 .contentType("application/json")
                 .content(objectMapper.writeValueAsString(recipe)))
-        .andExpect(status().isOk())
+        .andExpect(status().isCreated())
         .andExpect(jsonPath("$.id").value(1))
         .andExpect(jsonPath("$.name").value("Test Recipe"))
         .andExpect(jsonPath("$.ingredientsText").value("Delicious ingredients"))
@@ -355,7 +355,7 @@ public class RecipeControllerTest {
             post("/recipes")
                 .contentType("application/json")
                 .content(objectMapper.writeValueAsString(requestRecipe)))
-        .andExpect(status().isOk())
+        .andExpect(status().isCreated())
         .andExpect(jsonPath("$.id").value(1))
         .andExpect(jsonPath("$.name").value("Test Recipe"))
         .andExpect(jsonPath("$.ingredientsText").value("Test ingredients"))
@@ -398,7 +398,7 @@ public class RecipeControllerTest {
             post("/recipes")
                 .contentType("application/json")
                 .content(objectMapper.writeValueAsString(requestRecipe)))
-        .andExpect(status().isOk())
+        .andExpect(status().isCreated())
         .andExpect(jsonPath("$.id").value(1))
         .andExpect(jsonPath("$.name").value("Test Recipe"))
         .andExpect(jsonPath("$.ingredientsText").value("Test ingredients"))
@@ -429,7 +429,8 @@ public class RecipeControllerTest {
                 .content(objectMapper.writeValueAsString(invalidRecipe)))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.errorCode").value("VALIDATION_FAILED"))
-        .andExpect(jsonPath("$.fieldErrors.name").value("Recipe name cannot be left empty"));
+        .andExpect(
+            jsonPath("$.fieldErrors.name").value("Recipe name must be between 1-100 characters"));
 
     // verify
     verify(recipeService, never()).createRecipe(any(Recipe.class));
