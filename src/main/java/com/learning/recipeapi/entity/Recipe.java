@@ -42,6 +42,10 @@ public class Recipe {
   @Enumerated(EnumType.STRING)
   private Category category;
 
+  @ManyToOne
+  @JoinColumn(name = "user_id")
+  private User user;
+
   // many recipes have many ingredients
   // saving recipe saves new ingredients
   // no REMOVE - deleting recipe doesn't delete ingredients (they are used in other recipes)
@@ -63,7 +67,8 @@ public class Recipe {
       String instructions,
       Integer prepTimeMinutes,
       Integer servings,
-      Category category) {
+      Category category,
+  User user) {
     this.name = name;
     this.description = description;
     this.ingredientsText = ingredientsText; // UPDATED
@@ -136,6 +141,13 @@ public class Recipe {
 
   public void setCategory(Category category) {
     this.category = category;
+  }
+
+  public User getUser() {
+    return user;
+  }
+  public void setUser(User user) {
+    this.user = user;
   }
 
   // Relationship getters/setters

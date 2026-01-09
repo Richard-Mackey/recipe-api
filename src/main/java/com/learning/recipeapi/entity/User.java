@@ -1,5 +1,6 @@
 package com.learning.recipeapi.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
@@ -20,6 +21,7 @@ public class User {
   @Column(unique = true, nullable = false)
   private String email;
 
+  @JsonIgnore
   @Column(nullable = false)
   private String password;
 
@@ -30,9 +32,9 @@ public class User {
   @Column(name = "created_at", updatable = false)
   private LocalDateTime createdAt;
 
-  // TEMPORARILY COMMENT THIS OUT until Phase 2
-  // @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-  // private List<Recipe> recipes = new ArrayList<>();
+  @JsonIgnore
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+  private List<Recipe> recipes = new ArrayList<>();
 
   public User() {}
 
@@ -87,14 +89,11 @@ public class User {
     return createdAt;
   }
 
-  // No setter for createdAt - it's managed by @CreationTimestamp
+  public List<Recipe> getRecipes() {
+    return recipes;
+  }
 
-  // Uncomment in Phase 2:
-  // public List<Recipe> getRecipes() {
-  //     return recipes;
-  // }
-  //
-  // public void setRecipes(List<Recipe> recipes) {
-  //     this.recipes = recipes;
-  // }
+  public void setRecipes(List<Recipe> recipes) {
+    this.recipes = recipes;
+  }
 }
