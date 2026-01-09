@@ -2,16 +2,21 @@ package com.learning.recipeapi.service;
 
 import com.learning.recipeapi.*;
 import com.learning.recipeapi.entity.Recipe;
+import com.learning.recipeapi.entity.User;
 import com.learning.recipeapi.exception.DuplicateRecipeException;
 import com.learning.recipeapi.exception.InvalidPrepTimeException;
 import com.learning.recipeapi.exception.RecipeNotFoundException;
+import com.learning.recipeapi.repository.IngredientRepository;
 import com.learning.recipeapi.repository.RecipeRepository;
+import com.learning.recipeapi.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -20,10 +25,17 @@ import java.util.concurrent.CompletableFuture;
 public class RecipeService {
   private final RecipeRepository recipeRepository;
   private static final Logger logger = LoggerFactory.getLogger(RecipeService.class);
+  private final UserRepository userRepository;
+  private final IngredientRepository ingredientRepository;
 
   @Autowired
-  public RecipeService(RecipeRepository recipeRepository) {
+  public RecipeService(
+      RecipeRepository recipeRepository,
+      IngredientRepository ingredientRepository,
+      UserRepository userRepository) {
     this.recipeRepository = recipeRepository;
+    this.userRepository = userRepository;
+    this.ingredientRepository = ingredientRepository;
   }
 
   public Page<Recipe> getAllRecipes(Pageable pageable) {
@@ -107,6 +119,15 @@ public class RecipeService {
       logger.warn("Attempted to create duplicate recipe: {}", recipe.getName());
       throw new DuplicateRecipeException(recipe.getName());
     }
+    // Get authenticated user
+    String username = getAuthenticatedUsername();
+    User user =
+        userRepository
+            .findByUsername(username)
+            .orElseThrow(() -> new IllegalStateException("User not found: " + username));
+
+    // Associate recipe with user
+    recipe.setUser(user);
     Recipe savedRecipe = recipeRepository.save(recipe);
     logger.info("Created recipe with id: {}", savedRecipe.getId());
     return savedRecipe;
@@ -114,6 +135,8 @@ public class RecipeService {
 
   public Recipe updateRecipe(Integer id, Recipe updateRecipe) {
     Recipe existingRecipe = getRecipeById(id);
+
+    validateRecipeOwnership(existingRecipe);
 
     existingRecipe.setName(updateRecipe.getName());
     existingRecipe.setIngredients(updateRecipe.getIngredients());
@@ -127,10 +150,10 @@ public class RecipeService {
 
   public void deleteRecipe(Integer id) {
     logger.info("Deleting recipe with id: {}", id);
-    if (!recipeRepository.existsById(id)) {
-      logger.error("Recipe not found with id: {}", id);
-      throw new RecipeNotFoundException("Recipe not found with Id: " + id);
-    }
+
+    Recipe existingRecipe = getRecipeById(id);
+    validateRecipeOwnership(existingRecipe);
+
     recipeRepository.deleteById(id);
     logger.info("Deleted recipe with id: {}", id);
   }
@@ -174,5 +197,21 @@ public class RecipeService {
 
   public CompletableFuture<Recipe> updateRecipeAsync(Integer id, Recipe recipe) {
     return CompletableFuture.supplyAsync(() -> updateRecipe(id, recipe));
+  }
+
+  private String getAuthenticatedUsername() {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    if (authentication == null || !authentication.isAuthenticated()) {
+      throw new IllegalStateException("No authenticated user found");
+    }
+    return authentication.getName();
+  }
+
+  private void validateRecipeOwnership(Recipe recipe) {
+    String authenticatedUsername = getAuthenticatedUsername();
+
+    if (!recipe.getUser().getUsername().equals(authenticatedUsername)) {
+      throw new IllegalArgumentException("You can only modify your own recipes");
+    }
   }
 }
