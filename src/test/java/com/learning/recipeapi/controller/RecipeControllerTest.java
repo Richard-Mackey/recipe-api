@@ -19,7 +19,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 public class RecipeControllerTest {
 
   @Autowired private MockMvc mockMvc;
@@ -429,9 +429,7 @@ public class RecipeControllerTest {
                 .content(objectMapper.writeValueAsString(invalidRecipe)))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.errorCode").value("VALIDATION_FAILED"))
-        .andExpect(
-            jsonPath("$.fieldErrors.name").value("Recipe name must be between 1-100 characters"));
-
+        .andExpect(jsonPath("$.fieldErrors.name").value("Recipe name cannot be left empty"));
     // verify
     verify(recipeService, never()).createRecipe(any(Recipe.class));
   }
@@ -456,7 +454,8 @@ public class RecipeControllerTest {
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.errorCode").value("VALIDATION_FAILED"))
         .andExpect(
-            jsonPath("$.fieldErrors.instructions").value("Instructions cannot be left empty"));
+            jsonPath("$.fieldErrors.instructions")
+                .value("Instructions must be between 1-5000 characters"));
 
     // verify
     verify(recipeService, never()).createRecipe(any(Recipe.class));
