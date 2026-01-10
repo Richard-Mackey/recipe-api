@@ -2,10 +2,12 @@ package com.learning.recipeapi.service;
 
 import com.learning.recipeapi.*;
 import com.learning.recipeapi.entity.Recipe;
+import com.learning.recipeapi.entity.User;
 import com.learning.recipeapi.exception.DuplicateRecipeException;
 import com.learning.recipeapi.exception.InvalidPrepTimeException;
 import com.learning.recipeapi.exception.RecipeNotFoundException;
 import com.learning.recipeapi.repository.RecipeRepository;
+import com.learning.recipeapi.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,6 +17,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import static org.mockito.ArgumentMatchers.any;
 
@@ -31,6 +36,7 @@ import static org.mockito.Mockito.*;
 public class RecipeServiceTest {
 
   @Mock private RecipeRepository recipeRepository;
+  @Mock private UserRepository userRepository;
 
   @InjectMocks private RecipeService recipeService;
 
@@ -54,6 +60,23 @@ public class RecipeServiceTest {
     return recipe;
   }
 
+  private void mockAuthenticatedUser(String username) {
+    Authentication authentication = mock(Authentication.class);
+    when(authentication.getName()).thenReturn(username);
+    when(authentication.isAuthenticated()).thenReturn(true);
+
+    SecurityContext securityContext = mock(SecurityContext.class);
+    when(securityContext.getAuthentication()).thenReturn(authentication);
+
+    SecurityContextHolder.setContext(securityContext);
+  }
+
+  private User createTestUser() {
+    User user = new User("testuser", "test@test.com", "password");
+    user.setId(1);
+    return user;
+  }
+
   @Test
   void testGetAllRecipes() {
     // Arrange
@@ -62,7 +85,7 @@ public class RecipeServiceTest {
             createRecipe(1, "Recipe1", "Ingredient1, Ingredient2", Category.DINNER, 30, 4),
             createRecipe(2, "Recipe2", "Ingredient3, Ingredient4", Category.BREAKFAST, 15, 2));
     Pageable pageable = PageRequest.of(0, 10);
-    Page<Recipe> mockRecipePage = new PageImpl<>(mockRecipe,  pageable, mockRecipe.size());
+    Page<Recipe> mockRecipePage = new PageImpl<>(mockRecipe, pageable, mockRecipe.size());
 
     // Mock
     when(recipeRepository.findAll(pageable)).thenReturn(mockRecipePage);
@@ -107,39 +130,53 @@ public class RecipeServiceTest {
 
   @Test
   void testDeleteRecipe_Success() {
+    User testUser = createTestUser();
+
+    Recipe existingRecipe =
+        createRecipe(1, "Recipe1", "Ingredient1, Ingredient2", Category.DINNER, 30, 4);
+    existingRecipe.setUser(testUser);
     // Arrange
-    when(recipeRepository.existsById(1)).thenReturn(true);
+    mockAuthenticatedUser("testuser");
+
+    when(recipeRepository.findById(1)).thenReturn(Optional.of(existingRecipe));
     // Act
     recipeService.deleteRecipe(1);
     // Verify
-    verify(recipeRepository, times(1)).existsById(1);
+    verify(recipeRepository, times(1)).findById(1);
     verify(recipeRepository, times(1)).deleteById(1);
   }
 
   @Test
   void testDeleteRecipe_NotFound() {
     // Arrange
-    when(recipeRepository.existsById(999)).thenReturn(false);
+    when(recipeRepository.findById(999)).thenReturn(Optional.empty());
     // Act
     RecipeNotFoundException exception =
         assertThrows(RecipeNotFoundException.class, () -> recipeService.deleteRecipe(999));
     assertTrue(exception.getMessage().contains("Recipe not found with Id: 999"));
     // Verify
-    verify(recipeRepository, times(1)).existsById(999);
+    verify(recipeRepository, times(1)).findById(999);
     verify(recipeRepository, never()).deleteById(999);
   }
 
   @Test
   void testUpdateRecipe_Success() {
     // Arrange
+    User testUser = createTestUser();
+
     Recipe existingRecipe =
         createRecipe(1, "Recipe1", "Ingredient1, Ingredient2", Category.DINNER, 30, 4);
+    existingRecipe.setUser(testUser);
+
     Recipe updateRecipe =
         createRecipe(
             null, "New Recipe1", "Ingredient1, Ingredient2, Ingredient3", Category.DINNER, 40, 4);
+
     Recipe savedRecipe =
         createRecipe(
             1, "New Recipe1", "Ingredient1, Ingredient2, Ingredient3", Category.DINNER, 40, 4);
+
+    mockAuthenticatedUser("testuser");
 
     // Mock findById
     when(recipeRepository.findById(1)).thenReturn(Optional.of(existingRecipe));
@@ -160,11 +197,17 @@ public class RecipeServiceTest {
   @Test
   void testCreateRecipe_Success() {
     // Arrange
+    User testUser = createTestUser();
+
     Recipe newRecipe =
         createRecipe(null, "Recipe1", "Ingredient1, Ingredient2", Category.DINNER, 30, 4);
     Recipe savedRecipe =
         createRecipe(1, "Recipe1", "Ingredient1, Ingredient2", Category.DINNER, 30, 4);
+    savedRecipe.setUser(testUser);
     // Mock
+    mockAuthenticatedUser("testuser");
+    when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+
     when(recipeRepository.findByNameContainingIgnoreCase("Recipe1"))
         .thenReturn(Collections.emptyList());
     when(recipeRepository.save(any(Recipe.class))).thenReturn(savedRecipe);
@@ -176,6 +219,7 @@ public class RecipeServiceTest {
     assertEquals("Recipe1", result.getName());
 
     verify(recipeRepository, times(1)).findByNameContainingIgnoreCase("Recipe1");
+    verify(userRepository, times(1)).findByUsername("testuser");
     verify(recipeRepository, times(1)).save(newRecipe);
   }
 
