@@ -1,6 +1,7 @@
 package com.learning.recipeapi.entity;
 
 import com.learning.recipeapi.Category;
+import com.learning.recipeapi.RecipeSource;
 import com.learning.recipeapi.validation.RealisticCookingTime;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -41,6 +42,9 @@ public class Recipe {
 
   @Enumerated(EnumType.STRING)
   private Category category;
+
+  @Enumerated(EnumType.STRING)
+  private RecipeSource source;
 
   @ManyToOne
   @JoinColumn(name = "user_id")
@@ -168,5 +172,11 @@ public class Recipe {
   public void removeIngredient(Ingredient ingredient) {
     ingredients.remove(ingredient);
     ingredient.getRecipes().remove(this);
+  }
+  public void setSource(RecipeSource source) {
+    this.source = source;
+  }
+  public RecipeSource getSource() {
+    return source;
   }
 }

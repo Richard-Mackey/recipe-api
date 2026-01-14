@@ -1,12 +1,15 @@
 package com.learning.recipeapi.controller;
 
 import com.learning.recipeapi.Category;
+import com.learning.recipeapi.dto.SpoonacularSearchResponse;
 import com.learning.recipeapi.entity.Recipe;
+import com.learning.recipeapi.entity.User;
 import com.learning.recipeapi.service.RecipeService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -92,4 +95,28 @@ public class RecipeController {
   public Recipe updateRecipe(@PathVariable int id, @Valid @RequestBody Recipe recipe) {
     return recipeService.updateRecipe(id, recipe);
   }
-}
+
+  @GetMapping("/recipes/search/spoonacular")
+  public ResponseEntity<SpoonacularSearchResponse> searchSpoonacularRecipes(
+      @RequestParam String query,
+      @RequestParam(defaultValue = "5") Integer number,
+      @AuthenticationPrincipal User user) {
+
+    SpoonacularSearchResponse response =
+        recipeService.searchSpoonacularRecipes(query, user, number);
+    return ResponseEntity.ok(response);
+  }
+  @PostMapping("/recipes/spoonacular/{spoonacularId}")
+  public ResponseEntity<Recipe> saveSpoonacularRecipe(
+          @PathVariable Integer spoonacularId,
+          @AuthenticationPrincipal User user
+  ) {
+    logger.info("POST /recipes/spoonacular/{} - Saving Spoonacular recipe for user: {}",
+            spoonacularId, user.getUsername());
+
+    Recipe saved = recipeService.saveSpoonacularRecipe(spoonacularId, user);
+
+    logger.info("Saved Spoonacular recipe with id: {}", saved.getId());
+
+    return new ResponseEntity<>(saved, HttpStatus.CREATED);
+  }}

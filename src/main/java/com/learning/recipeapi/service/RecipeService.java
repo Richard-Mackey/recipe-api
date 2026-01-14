@@ -1,6 +1,7 @@
 package com.learning.recipeapi.service;
 
 import com.learning.recipeapi.*;
+import com.learning.recipeapi.dto.*;
 import com.learning.recipeapi.entity.Recipe;
 import com.learning.recipeapi.entity.User;
 import com.learning.recipeapi.exception.DuplicateRecipeException;
@@ -27,15 +28,18 @@ public class RecipeService {
   private static final Logger logger = LoggerFactory.getLogger(RecipeService.class);
   private final UserRepository userRepository;
   private final IngredientRepository ingredientRepository;
+  private final SpoonacularService spoonacularService;
 
   @Autowired
   public RecipeService(
       RecipeRepository recipeRepository,
       IngredientRepository ingredientRepository,
-      UserRepository userRepository) {
+      UserRepository userRepository,
+      SpoonacularService spoonacularService) {
     this.recipeRepository = recipeRepository;
     this.userRepository = userRepository;
     this.ingredientRepository = ingredientRepository;
+    this.spoonacularService = spoonacularService;
   }
 
   public Page<Recipe> getAllRecipes(Pageable pageable) {
@@ -158,6 +162,14 @@ public class RecipeService {
     logger.info("Deleted recipe with id: {}", id);
   }
 
+  public SpoonacularSearchResponse searchSpoonacularRecipes(
+      String query, User user, Integer number) {
+
+    logger.info("Searching Spoonacular for query='{}' by user={}", query, user.getUsername());
+
+    return spoonacularService.searchRecipes(query, number); // No hash passed
+  }
+
   public CompletableFuture<Page<Recipe>> getAllRecipesAsync(Pageable pageable) {
     return CompletableFuture.supplyAsync(() -> getAllRecipes(pageable));
   }
@@ -214,4 +226,52 @@ public class RecipeService {
       throw new IllegalArgumentException("You can only modify your own recipes");
     }
   }
+
+  private String convertIngredientsToText(List<SpoonacularIngredient> ingredients) {
+    StringBuilder result = new StringBuilder();
+    for (SpoonacularIngredient ingredient : ingredients) {
+      result.append(ingredient.original());
+      result.append(", ");
+    }
+    return result.substring(0, result.length() - 2); // remove final comma
+  }
+
+  private String convertInstructionsToText(
+      List<SpoonacularRecipeInstructionGroup> analyzedInstructions) {
+    StringBuilder result = new StringBuilder();
+    for (SpoonacularRecipeInstructionGroup group : analyzedInstructions) {
+      for (SpoonacularRecipeStep step : group.steps()) {
+        result.append(step.number()); // The number
+        result.append(". ");
+        result.append(step.step()); // The instruction text
+        result.append("\n"); // New line
+      }
+    }
+    return result.toString();
+  }
+
+  public Recipe saveSpoonacularRecipe(Integer spoonacularId, User user) {
+    // Step 1: Fetch from Spoonacular
+    SpoonacularRecipeDetailDTO spoonacularRecipe =
+            spoonacularService.getRecipeInformation(spoonacularId);
+
+    // Step 2: Convert to text
+    String ingredientsText = convertIngredientsToText(spoonacularRecipe.extendedIngredients());
+    String instructionsText = convertInstructionsToText(spoonacularRecipe.analyzedInstructions());
+
+    // Step 3: Create Recipe entity
+    Recipe recipe = new Recipe();
+    recipe.setName(spoonacularRecipe.title());
+    recipe.setIngredientsText(ingredientsText);
+    recipe.setInstructions(instructionsText);
+    recipe.setPrepTimeMinutes(spoonacularRecipe.readyInMinutes());
+    recipe.setServings(spoonacularRecipe.servings());
+    recipe.setCategory(null);
+    recipe.setSource(RecipeSource.SPOONACULAR);
+    recipe.setUser(user);
+
+    // Step 4: Save and return
+    return recipeRepository.save(recipe);
+  }
+
 }

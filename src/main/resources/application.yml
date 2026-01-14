@@ -21,3 +21,7 @@ app:
 jwt:
   secret: KETqKacftjmGhmQirL6kG7NcJ+gl3+AdeivvVPUknbfg4+jIK8Bg7V2K1PLJ4sXksc/wwiKMzxI870KF2bCPgg==
   expiration: 86400000  # 24 hours in milliseconds
+
+spoonacular:
+  api-key: 82b453b4acf6416ca0976c398be0c9bc
+  base-url: https://api.spoonacular.com

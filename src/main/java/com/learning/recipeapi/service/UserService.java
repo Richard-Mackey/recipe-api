@@ -26,15 +26,20 @@ public class UserService {
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
   private final JwtUtil jwtUtil;
+  private final SpoonacularService spoonacularService;
 
   private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
   @Autowired
   public UserService(
-      UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
+      UserRepository userRepository,
+      PasswordEncoder passwordEncoder,
+      JwtUtil jwtUtil,
+      SpoonacularService spoonacularService) {
     this.userRepository = userRepository;
     this.passwordEncoder = passwordEncoder;
     this.jwtUtil = jwtUtil;
+    this.spoonacularService = spoonacularService;
   }
 
   public User createUser(User user) {
@@ -81,12 +86,10 @@ public class UserService {
     User savedUser = userRepository.save(newUser);
 
     // Call Spoonacular and store the hash
-    //  String spoonacularHash = spoonacularService.connectUser(
-    //            savedUser.getUsername(),
-    //        savedUser.getEmail()
-    // );
-    // savedUser.setSpoonacularHash(spoonacularHash);
-    // userRepository.save(savedUser);  // Save again with the hash
+    String spoonacularHash =
+        spoonacularService.connectUser(savedUser.getUsername(), savedUser.getEmail());
+    savedUser.setSpoonacularHash(spoonacularHash);
+    userRepository.save(savedUser); // Save again with the hash
 
     String token = jwtUtil.generateToken(savedUser.getUsername());
     return new AuthResponse(savedUser.getUsername(), "User registered successfully", token);

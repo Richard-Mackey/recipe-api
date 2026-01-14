@@ -1,7 +1,7 @@
 package com.learning.recipeapi.config;
 
-
 import com.learning.recipeapi.security.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -38,7 +38,16 @@ public class SecurityConfig {
                     .authenticated())
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+        .exceptionHandling(
+            exception ->
+                exception.accessDeniedHandler(
+                    (request, response, accessDeniedException) -> {
+                      System.out.println("Exception: " + accessDeniedException.getMessage());
+                      accessDeniedException.printStackTrace();
+                      response.sendError(
+                          HttpServletResponse.SC_FORBIDDEN, accessDeniedException.getMessage());
+                    })); // ADD THIS
 
     return http.build();
   }
