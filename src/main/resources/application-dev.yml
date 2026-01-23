@@ -1,23 +1,16 @@
 # Development profile
 spring:
   datasource:
-    url: jdbc:h2:mem:recipedb
-    username: sa
+    url: jdbc:postgresql://localhost:5432/recipedb
+    username: mac
     password:
-
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
+    driver-class-name: org.postgresql.Driver
 
   jpa:
-    show-sql: true
     hibernate:
-      ddl-auto: create-drop
-
-server:
-  port: 8082
-
-logging:
-  level:
-    com.learning.recipeapi: DEBUG
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
