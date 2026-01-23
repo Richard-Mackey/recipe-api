@@ -49,7 +49,14 @@ public class RecipeService {
         pageable.getPageNumber(),
         pageable.getPageSize());
 
-    Page<Recipe> recipes = recipeRepository.findAll(pageable);
+    // Get authenticated user
+    String username = getAuthenticatedUsername();
+    User user =
+            userRepository
+                    .findByUsername(username)
+                    .orElseThrow(() -> new IllegalStateException("User not found: " + username));
+
+    Page<Recipe> recipes = recipeRepository.findPublicAndUserSpoonacularRecipes(user.getId(), pageable);
 
     logger.info(
         ("Retrieved {} recipes (page {} of {}"),
