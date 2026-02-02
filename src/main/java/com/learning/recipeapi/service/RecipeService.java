@@ -139,6 +139,7 @@ public class RecipeService {
 
     // Associate recipe with user
     recipe.setUser(user);
+    recipe.setSource(RecipeSource.USER_CREATED);
     Recipe savedRecipe = recipeRepository.save(recipe);
     logger.info("Created recipe with id: {}", savedRecipe.getId());
     return savedRecipe;
