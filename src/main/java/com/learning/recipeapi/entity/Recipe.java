@@ -35,8 +35,7 @@ public class Recipe {
   private String instructions;
 
   // custom annotation, used to validate recipe time (in validation package)
-  @RealisticCookingTime
-  private Integer prepTimeMinutes;
+  @RealisticCookingTime private Integer prepTimeMinutes;
 
   private Integer servings;
 
@@ -45,6 +44,10 @@ public class Recipe {
 
   @Enumerated(EnumType.STRING)
   private RecipeSource source;
+
+  private String imageUrl;
+
+  private Integer spoonacularId;
 
   @ManyToOne
   @JoinColumn(name = "user_id")
@@ -72,7 +75,7 @@ public class Recipe {
       Integer prepTimeMinutes,
       Integer servings,
       Category category,
-  User user) {
+      User user) {
     this.name = name;
     this.description = description;
     this.ingredientsText = ingredientsText; // UPDATED
@@ -150,6 +153,7 @@ public class Recipe {
   public User getUser() {
     return user;
   }
+
   public void setUser(User user) {
     this.user = user;
   }
@@ -173,10 +177,28 @@ public class Recipe {
     ingredients.remove(ingredient);
     ingredient.getRecipes().remove(this);
   }
+
   public void setSource(RecipeSource source) {
     this.source = source;
   }
+
   public RecipeSource getSource() {
     return source;
+  }
+
+  public String getImageUrl() {
+    return imageUrl;
+  }
+
+  public void setImageUrl(String imageUrl) {
+    this.imageUrl = imageUrl;
+  }
+
+  public Integer getSpoonacularId() {
+    return spoonacularId;
+  }
+
+  public void setSpoonacularId(Integer spoonacularId) {
+    this.spoonacularId = spoonacularId;
   }
 }

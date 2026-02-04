@@ -268,14 +268,17 @@ public class RecipeService {
     String instructionsText = convertInstructionsToText(spoonacularRecipe.analyzedInstructions());
 
     // Step 3: Create Recipe entity
+    // Step 3: Create Recipe entity
     Recipe recipe = new Recipe();
     recipe.setName(spoonacularRecipe.title());
+    recipe.setImageUrl(spoonacularRecipe.image());
     recipe.setIngredientsText(ingredientsText);
     recipe.setInstructions(instructionsText);
     recipe.setPrepTimeMinutes(spoonacularRecipe.readyInMinutes());
     recipe.setServings(spoonacularRecipe.servings());
     recipe.setCategory(null);
     recipe.setSource(RecipeSource.SPOONACULAR);
+    recipe.setSpoonacularId(spoonacularId);
     recipe.setUser(user);
 
     // Step 4: Save and return
