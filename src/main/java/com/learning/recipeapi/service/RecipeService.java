@@ -52,11 +52,12 @@ public class RecipeService {
     // Get authenticated user
     String username = getAuthenticatedUsername();
     User user =
-            userRepository
-                    .findByUsername(username)
-                    .orElseThrow(() -> new IllegalStateException("User not found: " + username));
+        userRepository
+            .findByUsername(username)
+            .orElseThrow(() -> new IllegalStateException("User not found: " + username));
 
-    Page<Recipe> recipes = recipeRepository.findPublicAndUserSpoonacularRecipes(user.getId(), pageable);
+    Page<Recipe> recipes =
+        recipeRepository.findPublicAndUserSpoonacularRecipes(user.getId(), pageable);
 
     logger.info(
         ("Retrieved {} recipes (page {} of {}"),
@@ -258,10 +259,29 @@ public class RecipeService {
     return result.toString();
   }
 
+  private Category mapDishTypesToCategory(List<String> dishTypes) {
+    for (String dishType : dishTypes) {
+      if (dishType.equalsIgnoreCase("breakfast")) {
+
+        return Category.BREAKFAST;
+      }
+      if (dishType.equalsIgnoreCase("lunch")) {
+        return Category.LUNCH;
+      }
+      if (dishType.equalsIgnoreCase("dinner")) {
+        return Category.DINNER;
+      }
+      if (dishType.equalsIgnoreCase("dessert")) {
+        return Category.DESSERT;
+      }
+    }
+    return null;
+  }
+
   public Recipe saveSpoonacularRecipe(Integer spoonacularId, User user) {
     // Step 1: Fetch from Spoonacular
     SpoonacularRecipeDetailDTO spoonacularRecipe =
-            spoonacularService.getRecipeInformation(spoonacularId);
+        spoonacularService.getRecipeInformation(spoonacularId);
 
     // Step 2: Convert to text
     String ingredientsText = convertIngredientsToText(spoonacularRecipe.extendedIngredients());
@@ -276,7 +296,7 @@ public class RecipeService {
     recipe.setInstructions(instructionsText);
     recipe.setPrepTimeMinutes(spoonacularRecipe.readyInMinutes());
     recipe.setServings(spoonacularRecipe.servings());
-    recipe.setCategory(null);
+    recipe.setCategory(mapDishTypesToCategory(spoonacularRecipe.dishTypes()));
     recipe.setSource(RecipeSource.SPOONACULAR);
     recipe.setSpoonacularId(spoonacularId);
     recipe.setUser(user);
@@ -284,5 +304,4 @@ public class RecipeService {
     // Step 4: Save and return
     return recipeRepository.save(recipe);
   }
-
 }

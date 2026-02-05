@@ -9,4 +9,5 @@ public record SpoonacularRecipeDetailDTO(
     Integer servings,
     Integer readyInMinutes,
     List<SpoonacularIngredient> extendedIngredients,
-    List<SpoonacularRecipeInstructionGroup> analyzedInstructions) {}
+    List<SpoonacularRecipeInstructionGroup> analyzedInstructions,
+    List<String> dishTypes) {}
