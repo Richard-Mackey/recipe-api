@@ -8,4 +8,4 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/RecipeAPI-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["sh", "-c", "echo DATABASE_URL=$DATABASE_URL && echo JWT_SECRET=$JWT_SECRET && java -Dspring.datasource.url=$DATABASE_URL -Djwt.secret=$JWT_SECRET -Djwt.expiration=86400000 -Dspoonacular.api.key=$SPOONACULAR_API_KEY -jar app.jar"]
+CMD ["java", "-jar", "app.jar"]
