@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.postgresql.dialect.PostgreSQLDialect
+
+jwt:
+  secret: ${JWT_SECRET}
+
+spoonacular:
+  api:
+    key: ${SPOONACULAR_API_KEY}
+
+server:
+  port: 8082
