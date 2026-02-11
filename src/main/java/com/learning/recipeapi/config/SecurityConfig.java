@@ -44,16 +44,16 @@ public class SecurityConfig {
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-        .exceptionHandling(
-            exception ->
-                exception.accessDeniedHandler(
-                    (request, response, accessDeniedException) -> {
-                      System.out.println("Exception: " + accessDeniedException.getMessage());
-                      accessDeniedException.printStackTrace();
-                      response.sendError(
-                          HttpServletResponse.SC_FORBIDDEN, accessDeniedException.getMessage());
-                    }));
-    http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
+            .exceptionHandling(
+                    exception ->
+                            exception.accessDeniedHandler(
+                                    (request, response, accessDeniedException) -> {
+                                      System.out.println("Exception: " + accessDeniedException.getMessage());
+                                      accessDeniedException.printStackTrace();
+                                      response.sendError(
+                                              HttpServletResponse.SC_FORBIDDEN, accessDeniedException.getMessage());
+                                    }))
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()));  // ← Part of the chain
 
     return http.build();
   }
